@@ -14,7 +14,8 @@
 
 (set-face-attribute 'default nil :font "Fira Code" :height 110)
 
-(load-theme 'wombat)
+;; updated with doom theme below.
+;; (load-theme 'wombat)
 
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -70,12 +71,21 @@
   :init
   (ivy-mode 1))
 
+;; At first Configuration on a new machine
+;; Run the following command
+;; M-x all-the-icons-install-fonts
+;; it will ask for a diretory to install in. create a new folder in .emacs and save the fonts there.
+;; you need to manually install the fonts on your computer.
+(use-package all-the-icons)
+;;(use-package all-the-fonts) 
+
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 15)))
 
-(use-package doom-themes)
+(use-package doom-themes
+  :init (load-theme 'doom-acario-dark t))
 
 ;; if any error occurs, M-x package-install RET rainbow-delimiters RET 
 (use-package rainbow-delimiters
@@ -109,3 +119,51 @@
   ([remap describe-command] . helpful-command)
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
+
+(use-package general)
+
+;; evil mode
+(defun rune/evil-hook()
+  (dolist (mode '(custom-mode
+		  eshell-mode
+		  git-rebase-mode
+		  erc-mode
+		  circe-server-mode
+		  circe-chat-mode
+		  circe-query-mode
+		  sauron-mode
+		  term-mode))
+    (add-to-list 'evil-emacs-state-modes mode)))
+
+(use-package evil
+  :init
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-i-jump nil)
+  :hook (evil-mode, rune/evil-hook)
+  :config
+  (evil-mode 1)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+
+  ;; Use visual line motions even outside of visual-line-mode buffers
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(evil general which-key use-package rainbow-delimiters ivy-rich helpful doom-themes doom-modeline counsel command-log-mode)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
