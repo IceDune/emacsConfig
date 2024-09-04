@@ -4,7 +4,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(doom-themes helpful ivy-rich which-key rainbow-delimiters doom-modeline counsel ivy command-log-mode)))
+   '(hydra evil-collection evil general all-the-icons doom-themes helpful ivy-rich which-key rainbow-delimiters doom-modeline counsel ivy command-log-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -61,11 +61,12 @@
 ;; M-x global-command-log-mode
 ;; M-x clm/toggle-command-log-buffer
 
-(use-package command-log-mode
-  :ensure t
-  :config
-  (command-log-mode 1)
-  (clm/open-command-log-buffer))  ;; This line enables command log mode permanently
+;; Not working :(
+;;(use-package command-log-mode
+;;  :ensure t
+;;  :config
+;;  (command-log-mode 1)
+;;  (clm/open-command-log-buffer))  ;; This line enables command log mode permanently
 
 ;; Display column number and line number
 (column-number-mode)
@@ -119,13 +120,32 @@
   (counsel-mode 1)
   ;; Dont start search with ^
   (setq ivy-initial-inputs-alist nil))
+  
+;; Switch between buffers
+(global-set-key (kbd "C-M-j") 'counsel-switch-buffer)
 
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 30)))
   
-(use-package doom-themes)
+(use-package doom-themes
+  :ensure t
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-dracula t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
   
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -151,3 +171,82 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
 
+;; On first Install, you need to install the fonts on the system manually
+;; M-x all-the-icons-install-fonts
+;; M-x nerd-icons-install-fonts
+;; go to the folder and manually install the fonts or select the systems font folder
+(use-package all-the-icons)
+
+;; set your own key bindings
+(use-package general
+  :config
+  (general-create-definer rune/leader-keys
+    :states '(normal insert visual emacs)
+    :prefix "SPC"
+    :global-prefix "C-SPC")
+
+  (rune/leader-keys
+    "t"  '(:ignore t :which-key "toggles")
+    "tt" '(counsel-load-theme :which-key "choose theme")))
+
+;; Use M-: to use eval
+;; this helps to run commands on the go rather than typing them in the init file.
+;; eg: for global-unset-key
+
+
+;; Evil Mode
+;; theres a fourth mode in evil called emacs mode (C-z), theres an orange icon at the bottom
+;; here vim bindings are disabled and emacs bindings are enabled.
+
+;; if you want to remove evil bindings from a particular mode, remove it from the evil-collection-mode-list
+
+(defun rune/evil-hook ()
+  (dolist (mode '(custom-mode
+                  eshell-mode
+                  git-rebase-mode
+                  erc-mode
+                  circe-server-mode
+                  circe-chat-mode
+                  circe-query-mode
+                  sauron-mode
+                  term-mode))
+    (add-to-list 'evil-emacs-state-modes mode)))
+
+(use-package evil
+  :init
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-i-jump nil)
+  :config
+  (evil-mode 1)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+
+  ;; Use visual line motions even outside of visual-line-mode buffers
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+
+  ;; Set initial state for specific modes
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal))
+
+;; Add the hook to 'evil-mode-hook' to ensure the modes are set to 'emacs' state
+(add-hook 'evil-mode-hook 'rune/evil-hook)
+
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
+
+;; for cyclic keys
+(use-package hydra)
+
+(defhydra hydra-text-scale (:timeout 4)
+  "scale text"
+  ("j" text-scale-increase "in")
+  ("k" text-scale-decrease "out")
+  ("f" nil "finished" :exit t))
+
+(rune/leader-keys
+  "ts" '(hydra-text-scale/body :which-key "scale text"))
