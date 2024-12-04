@@ -1,41 +1,87 @@
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(visual-fill-column org-bullets forge evil-magit magit counsel-projectile hydra evil-collection evil general all-the-icons doom-themes helpful ivy-rich which-key rainbow-delimiters doom-modeline counsel ivy command-log-mode)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
- 
-;; To describe what a function/variable does
-;; describe-variable: C-h f 
-;; you can also put the cursor on a variable and use the key binding.
+(setq inhibit-startup-message t) ; Don't show the splash screen
+(setq visible-bell t)            ; Flash when the bell rings
 
-(setq inhibit-startup-message t)
-
-(scroll-bar-mode -1)    ; Disable visible scrollbar
-(tool-bar-mode -1)      ; Disable the tool bar
+;; Turn off some unneeded UI elements
+(menu-bar-mode -1)  ; Leave this one on if you're a beginner!
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
 (tooltip-mode -1)       ; Disable tooltips  
 (set-fringe-mode 10)    ; Give some breathing room
-
-(menu-bar-mode -1)      ; Disable the menu bar
-
-;; Set up the visible bell
-(setq visible-bell t)
-
-(set-face-attribute 'default nil :font "JetBrains Mono Regular" :height 150)
-
-;; Commented out default themes
-;; (load-theme 'tango-dark)
 
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+;; Line Numbers and random config:
+;; Display line numbers in every buffer
+(global-display-line-numbers-mode 1)
+
+;; Relative line numbers
+(setq display-line-numbers 'relative)
+
+;; Column numbers
+(column-number-mode)
+
+;; Disable line numbers for some modes
+(dolist (mode '(org-mode-hook
+		term-mode-hook
+		shell-mode-hook
+		eshell-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+;; command log mode
+(use-package command-log-mode
+  :ensure t
+  :config
+  (command-log-mode 1)
+  (global-command-log-mode)
+  (clm/open-command-log-buffer))  ;; This line enables command log mode permanently
+
+;; Fonts and Themes:
+;; Set FiraCode Nerd Font Mono as the default font
+(set-face-attribute 'default nil
+                    :family "FiraCode Nerd Font Mono"
+		    :weight 'bold
+                    :height 120)
+
+;; FiraCode Nerd Font Mono doesnt support all icons, so add a fallback to render unsupported icons.
+(set-fontset-font t 'unicode "FiraCode Nerd Font Mono" nil 'prepend)
+
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1)
+  :custom ((doom-modeline-height 30)))
+
+;; On first Install, you need to install the fonts on the system manually
+;; M-x all-the-icons-install-fonts
+;; M-x nerd-icons-install-fonts
+;; go to the folder and manually install the fonts or select the systems font folder
+(use-package all-the-icons
+  :ensure t)
+  
+(use-package doom-themes
+  :ensure t
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-dracula t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
+  
+(use-package rainbow-delimiters
+  :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+
+;; Package Manager:
 ;; Initialize package sources
 (require 'package)
 
@@ -54,32 +100,7 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-;; Buffer on the right side of the screen, which shows the key bindings run
-;; To enable Locally:
-;; M-x clm/toggle-command-log-buffer
-;; To enable globally:
-;; M-x global-command-log-mode
-;; M-x clm/toggle-command-log-buffer
-
-;; Not working :(
-(use-package command-log-mode
-  :ensure t
-  :config
-  (command-log-mode 1)
-  (global-command-log-mode)
-  (clm/open-command-log-buffer))  ;; This line enables command log mode permanently
-
-;; Display column number and line number
-(column-number-mode)
-(global-display-line-numbers-mode t)
-
-;; Disable line numbers for some modes
-(dolist (mode '(org-mode-hook
-				term-mode-hook
-				shell-mode-hook
-				eshell-mode-hook))
-	(add-hook mode (lambda () (display-line-numbers-mode 0))))
-
+;; Ivy, Counsel:
 ;; ivy package
 (use-package ivy
   :ensure t
@@ -121,43 +142,23 @@
   (counsel-mode 1)
   ;; Dont start search with ^
   (setq ivy-initial-inputs-alist nil))
-  
+
 ;; Switch between buffers
 (global-set-key (kbd "C-M-j") 'counsel-switch-buffer)
 
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 30)))
-  
-(use-package doom-themes
-  :ensure t
-  :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-dracula t)
-
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-  ;; Enable custom neotree theme (all-the-icons must be installed!)
-  (doom-themes-neotree-config)
-  ;; or for treemacs users
-  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-  (doom-themes-treemacs-config)
-  ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config))
-  
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
-
+;; Load which-key explicitly and configure it
 (use-package which-key
-  :ensure t
-  :diminish which-key-mode
-  :init (which-key-mode)
+  :ensure t  ;; Ensures package is installed
+  :diminish which-key-mode  ;; Optional: Hide from mode line
+  :init
+  (which-key-mode)  ;; Enable which-key globally
   :config
-  (setq which-key-idle-delay 0
-        which-key-idle-secondary-delay 0))
+  (setq which-key-idle-delay 0.5  ;; Show suggestions after 0.5s
+        which-key-idle-secondary-delay 0.1  ;; Faster for subsequent popups
+        which-key-sort-order 'which-key-key-order-alpha  ;; Sort keys alphabetically
+        which-key-max-description-length 40  ;; Adjust description width
+        which-key-popup-type 'side-window))  ;; Display on the side window
+
 
 ;; Shows cross references for variables/functions while using help
 (use-package helpful
@@ -172,12 +173,6 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
 
-;; On first Install, you need to install the fonts on the system manually
-;; M-x all-the-icons-install-fonts
-;; M-x nerd-icons-install-fonts
-;; go to the folder and manually install the fonts or select the systems font folder
-(use-package all-the-icons)
-
 ;; set your own key bindings
 (use-package general
   :config
@@ -189,11 +184,6 @@
   (rune/leader-keys
     "t"  '(:ignore t :which-key "toggles")
     "tt" '(counsel-load-theme :which-key "choose theme")))
-
-;; Use M-: to use eval
-;; this helps to run commands on the go rather than typing them in the init file.
-;; eg: for global-unset-key
-
 
 ;; Evil Mode
 ;; theres a fourth mode in evil called emacs mode (C-z), theres an orange icon at the bottom
@@ -286,50 +276,18 @@
   (variable-pitch-mode 1)
   (visual-line-mode 1))
 
-;; Org Mode Configuration ------------------------------------------------------
 
-(defun efs/org-font-setup ()
-  ;; Replace list hyphen with dot
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-
-  ;; Set faces for heading levels
-  (dolist (face '((org-level-1 . 1.2)
-                  (org-level-2 . 1.1)
-                  (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
-                  (org-level-5 . 1.1)
-                  (org-level-6 . 1.1)
-                  (org-level-7 . 1.1)
-                  (org-level-8 . 1.1)))
-    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
-
-  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
-
-(use-package org
-  :hook (org-mode . efs/org-mode-setup)
-  :config
-  (setq org-ellipsis " ▾")
-  (efs/org-font-setup))
-
-(use-package org-bullets
-  :after org
-  :hook (org-mode . org-bullets-mode)
-  :custom
-  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
-
-(defun efs/org-mode-visual-fill ()
-  (setq visual-fill-column-width 100
-        visual-fill-column-center-text t)
-  (visual-fill-column-mode 1))
-
-(use-package visual-fill-column
-  :hook (org-mode . efs/org-mode-visual-fill))
+;; AutoGenerated Content:
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(which-key forge magit counsel-projectile projectile hydra evil-collection evil general helpful counsel ivy-rich ivy command-log-mode rainbow-delimiters all-the-icons doom-themes doom-modeline)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
